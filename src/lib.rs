@@ -65,11 +65,18 @@ impl Query{
         for i in 1..x.len() {
             let tmp = a[i];
             let mut j = i;
-            while j > 0 && tmp < a[j - 1] {;
+            while j > 0 && tmp < a[j - 1] {
+                ;
                 a[j] = a[j - 1];
                 j -= 1;
             }
             a[j] = tmp;
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test1() {}
 }
