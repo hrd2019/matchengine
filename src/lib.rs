@@ -21,7 +21,7 @@ type qty = f64;
 struct Query {
     pcs: HashMap<String, qty>,
     odrs: HashMap<String, Box<Vec<Odr>>>,
-    pcl: Vec<u64>,
+    pcl: Box<Vec<u64>>,
     side: Side,
     pc: f64,
 }
@@ -31,21 +31,24 @@ impl Query {
         Query {
             pcs: HashMap::new(),
             odrs: HashMap::new(),
-            pcl: vec![],
+            pcl: Box::new(vec![]),
             side: s,
             pc: 0.0,
         }
     }
 
     fn insert(&mut self, odr: Odr) {
-        let item = self.pcs.entry(odr.pc).or_insert(0.0);
+        let item = self
+            .pcs
+            .entry(String::from(odr.pc.to_string()))
+            .or_insert(0.0);
         *item += odr.qty;
 
         let v = (odr.pc * odr.arcy as f64) as u64;
 
         let item = self
             .odrs
-            .entry(odr.pc as String)
+            .entry(odr.pc.to_string())
             .or_insert(Box::new(vec![]));
         item.push(odr);
 
