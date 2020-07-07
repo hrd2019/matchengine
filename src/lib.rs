@@ -16,6 +16,18 @@ struct Odr {
     arcy: i64,
 }
 
+impl Odr {
+    fn new(pc: f64, qty: f64, side: Side, arcy: i64) -> Odr {
+        Odr {
+            pc,
+            qty,
+            side,
+            arcy,
+            ts: SystemTime::now(),
+        }
+    }
+}
+
 type qty = f64;
 
 struct Query {
@@ -54,16 +66,15 @@ impl Query {
 
         self.pcl.push(v);
 
-        for i in self.pcl.iter() {
-            match self.side {
-                Side::Bid => {
-                    self.sort();
-                }
-                Side::Ask => {
-                    self.sort();
-                }
-                _ => {}
+        // for i in self.pcl.iter() {
+        match self.side {
+            Side::Bid => {
+                self.sort();
             }
+            Side::Ask => {
+                self.sort();
+            }
+            _ => {} // }
         }
     }
 
@@ -83,8 +94,18 @@ impl Query {
 
 #[cfg(test)]
 mod tests {
+    use crate::{Odr, Query, Side};
+
     #[test]
     fn test1() {
         println!("test");
+
+        let mut q = Query::new(Side::Bid);
+
+        let o1 = Odr::new(1.2, 0.45, Side::Bid, 5);
+        let o2 = Odr::new(1.3, 0.45, Side::Bid, 5);
+
+        q.insert(o1);
+        q.insert(o2);
     }
 }
