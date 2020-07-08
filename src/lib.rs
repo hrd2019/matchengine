@@ -13,7 +13,7 @@ pub enum Side {
     Ask,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Send, Sync)]
 pub struct Odr {
     pc: f64,
     qty: f64,
