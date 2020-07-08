@@ -1,19 +1,24 @@
 pub mod matcher {
-    use matchengine::{Queue, Side};
+    use matchengine::{Asset, Queue, Side};
 
     pub trait Process {
         fn run(&mut self);
     }
 
     struct Matcher {
-        name: String,
+        curcy_asset: Asset,
+        value_asset: Asset,
         queue: Queue,
     }
 
     impl Matcher {
-        pub fn new(name: String) -> Matcher {
+        pub fn new(c: Asset, v: Asset) -> Matcher {
             let mut queue = Queue::new(Side::Bid);
-            Matcher { name, queue }
+            Matcher {
+                curcy_asset: c,
+                value_asset: v,
+                queue,
+            }
         }
     }
 

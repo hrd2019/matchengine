@@ -3,6 +3,12 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::time::SystemTime;
 
+pub enum Asset {
+    A,
+    B,
+    C,
+}
+
 #[derive(Debug)]
 pub enum Side {
     Bid,
