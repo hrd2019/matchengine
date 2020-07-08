@@ -1,6 +1,6 @@
 use std::borrow::BorrowMut;
 use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::SystemTime;
 
 pub enum Asset {
@@ -40,7 +40,7 @@ type qty = f64;
 
 #[derive(Debug)]
 pub struct Queue {
-    pcs: HashMap<String, qty>,
+    pcs: BTreeMap<String, qty>,
     pub odrs: HashMap<String, Box<Vec<Odr>>>,
     pcl: Box<Vec<f64>>,
     side: Side,
@@ -50,7 +50,7 @@ pub struct Queue {
 impl Queue {
     pub fn new(s: Side) -> Queue {
         Queue {
-            pcs: HashMap::new(),
+            pcs: BTreeMap::new(),
             odrs: HashMap::new(),
             pcl: Box::new(vec![]),
             side: s,
@@ -114,10 +114,14 @@ mod test {
         let o1 = Odr::new(1.2, 0.45, Side::Bid, 5);
         let o2 = Odr::new(1.3, 0.45, Side::Bid, 5);
         let o3 = Odr::new(1.1, 0.45, Side::Bid, 5);
+        let o4 = Odr::new(1.1, 1.45, Side::Bid, 5);
+        let o5 = Odr::new(1.05, 1.45, Side::Bid, 5);
 
         q.insert(o1);
         q.insert(o2);
         q.insert(o3);
+        q.insert(o4);
+        q.insert(o5);
 
         println!("{:#?}\n{:#?}\n{:#?}", q.odrs, q.pcs, q.pcl);
     }
