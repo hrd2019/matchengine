@@ -1,5 +1,5 @@
 pub mod matcher {
-    use matchengine::{Asset, Queue, Side};
+    use matchengine::{Asset, Odr, Queue, Side};
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
 
@@ -8,16 +8,16 @@ pub mod matcher {
         fn settle_do(&mut self);
     }
 
-    struct Matcher<T> {
+    struct Matcher {
         curcy_asset: Asset,
         value_asset: Asset,
         queue: Queue,
-        sx: Sender<T>,
-        rx: Receiver<T>,
+        sx: Sender<Odr>,
+        rx: Receiver<Odr>,
     }
 
-    impl<T> Matcher<T> {
-        pub fn new(c: Asset, v: Asset) -> Matcher<T> {
+    impl Matcher {
+        pub fn new(c: Asset, v: Asset) -> Matcher {
             let mut queue = Queue::new(Side::Bid);
             let (sx, rx) = mpsc::channel();
             Matcher {
@@ -30,7 +30,7 @@ pub mod matcher {
         }
     }
 
-    impl<T> Process for Matcher<T> {
+    impl Process for Matcher {
         fn match_do(&mut self) {
             println!("{:#?}", self.queue);
         }
