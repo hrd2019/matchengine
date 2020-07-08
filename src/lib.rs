@@ -7,7 +7,7 @@ pub enum Asset {
     C,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Side {
     Bid,
     Ask,
