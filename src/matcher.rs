@@ -36,7 +36,7 @@ pub mod matcher {
         }
 
         fn settle_do(&self) {
-            for rec in self.rx {
+            for rec in &self.rx {
                 println!("settle: {:#?}", rec);
             }
         }

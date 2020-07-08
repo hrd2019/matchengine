@@ -13,13 +13,21 @@ pub enum Side {
     Ask,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct Odr {
     pc: f64,
     qty: f64,
     side: Side,
     ts: SystemTime,
     arcy: i64,
+}
+
+impl Copy for Odr {}
+
+impl Clone for Odr {
+    fn clone(&self) -> Odr {
+        *self
+    }
 }
 
 impl Odr {
