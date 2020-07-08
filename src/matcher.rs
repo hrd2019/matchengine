@@ -5,7 +5,7 @@ pub mod matcher {
 
     pub trait Process {
         fn match_do(&mut self);
-        fn settle_do(&mut self);
+        fn settle_do(&self);
     }
 
     struct Matcher {
@@ -35,7 +35,7 @@ pub mod matcher {
             println!("{:#?}", self.queue);
         }
 
-        fn settle_do(&mut self) {
+        fn settle_do(&self) {
             for rec in self.rx {
                 println!("settle: {:#?}", rec);
             }
