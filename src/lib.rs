@@ -3,12 +3,14 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::time::SystemTime;
 
-enum Side {
+#[derive(Debug)]
+pub enum Side {
     Bid,
     Ask,
 }
 
-struct Odr {
+#[derive(Debug)]
+pub struct Odr {
     pc: f64,
     qty: f64,
     side: Side,
@@ -17,7 +19,7 @@ struct Odr {
 }
 
 impl Odr {
-    fn new(pc: f64, qty: f64, side: Side, arcy: i64) -> Odr {
+    pub fn new(pc: f64, qty: f64, side: Side, arcy: i64) -> Odr {
         Odr {
             pc,
             qty,
@@ -30,16 +32,17 @@ impl Odr {
 
 type qty = f64;
 
-struct Query {
+#[derive(Debug)]
+pub struct Query {
     pcs: HashMap<String, qty>,
-    odrs: HashMap<String, Box<Vec<Odr>>>,
+    pub odrs: HashMap<String, Box<Vec<Odr>>>,
     pcl: Box<Vec<u64>>,
     side: Side,
     pc: f64,
 }
 
 impl Query {
-    fn new(s: Side) -> Query {
+    pub fn new(s: Side) -> Query {
         Query {
             pcs: HashMap::new(),
             odrs: HashMap::new(),
@@ -49,7 +52,7 @@ impl Query {
         }
     }
 
-    fn insert(&mut self, odr: Odr) {
+    pub fn insert(&mut self, odr: Odr) {
         let item = self
             .pcs
             .entry(String::from(odr.pc.to_string()))
@@ -93,8 +96,8 @@ impl Query {
 }
 
 #[cfg(test)]
-mod tests {
-    use crate::{Odr, Query, Side};
+mod test {
+    use super::*;
 
     #[test]
     fn test1() {
@@ -104,8 +107,12 @@ mod tests {
 
         let o1 = Odr::new(1.2, 0.45, Side::Bid, 5);
         let o2 = Odr::new(1.3, 0.45, Side::Bid, 5);
+        let o3 = Odr::new(1.3, 0.45, Side::Bid, 5);
 
         q.insert(o1);
         q.insert(o2);
+        q.insert(o3);
+
+        println!("{:#?}\n{:#?}", q.odrs, q.pcs);
     }
 }
