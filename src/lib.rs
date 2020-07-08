@@ -33,7 +33,7 @@ impl Odr {
 type qty = f64;
 
 #[derive(Debug)]
-pub struct Query {
+pub struct Queue {
     pcs: HashMap<String, qty>,
     pub odrs: HashMap<String, Box<Vec<Odr>>>,
     pcl: Box<Vec<u64>>,
@@ -41,9 +41,9 @@ pub struct Query {
     pc: f64,
 }
 
-impl Query {
-    pub fn new(s: Side) -> Query {
-        Query {
+impl Queue {
+    pub fn new(s: Side) -> Queue {
+        Queue {
             pcs: HashMap::new(),
             odrs: HashMap::new(),
             pcl: Box::new(vec![]),
@@ -103,7 +103,7 @@ mod test {
     fn test1() {
         println!("test");
 
-        let mut q = Query::new(Side::Bid);
+        let mut q = Queue::new(Side::Bid);
 
         let o1 = Odr::new(1.2, 0.45, Side::Bid, 5);
         let o2 = Odr::new(1.3, 0.45, Side::Bid, 5);

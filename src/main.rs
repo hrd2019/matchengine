@@ -1,9 +1,11 @@
-use matchengine::{Odr, Query, Side};
+use matchengine::{Odr, Queue, Side};
+
+mod matcher;
 
 fn main() {
     println!("Hello, world!");
 
-    let mut q = Query::new(Side::Bid);
+    let mut q = Queue::new(Side::Bid);
 
     let o1 = Odr::new(1.2, 0.45, Side::Bid, 5);
     let o2 = Odr::new(1.3, 0.45, Side::Bid, 5);
