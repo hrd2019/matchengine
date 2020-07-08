@@ -42,7 +42,7 @@ type qty = f64;
 pub struct Queue {
     pcs: HashMap<String, qty>,
     pub odrs: HashMap<String, Box<Vec<Odr>>>,
-    pcl: Box<Vec<u64>>,
+    pcl: Box<Vec<f64>>,
     side: Side,
     pc: f64,
 }
@@ -65,7 +65,7 @@ impl Queue {
             .or_insert(0.0);
         *item += odr.qty;
 
-        let v = (odr.pc * odr.arcy as f64) as u64;
+        let v = odr.pc * odr.arcy as f64;
 
         let item = self
             .odrs
@@ -113,12 +113,12 @@ mod test {
 
         let o1 = Odr::new(1.2, 0.45, Side::Bid, 5);
         let o2 = Odr::new(1.3, 0.45, Side::Bid, 5);
-        let o3 = Odr::new(1.3, 0.45, Side::Bid, 5);
+        let o3 = Odr::new(1.1, 0.45, Side::Bid, 5);
 
         q.insert(o1);
         q.insert(o2);
         q.insert(o3);
 
-        println!("{:#?}\n{:#?}", q.odrs, q.pcs);
+        println!("{:#?}\n{:#?}\n{:#?}", q.odrs, q.pcs, q.pcl);
     }
 }
