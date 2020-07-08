@@ -18,7 +18,7 @@ pub mod matcher {
 
     impl Matcher {
         pub fn new(c: Asset, v: Asset) -> Matcher {
-            let mut queue = Queue::new(Side::Bid);
+            let queue = Queue::new(Side::Bid);
             let (sx, rx) = mpsc::channel();
             Matcher {
                 curcy_asset: c,
