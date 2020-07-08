@@ -2,7 +2,8 @@ pub mod matcher {
     use matchengine::{Asset, Queue, Side};
 
     pub trait Process {
-        fn run(&mut self);
+        fn matchdo(&mut self);
+        fn settledo(&mut self);
     }
 
     struct Matcher {
@@ -23,8 +24,12 @@ pub mod matcher {
     }
 
     impl Process for Matcher {
-        fn run(&mut self) {
-            println!("{:#?}", self.queue)
+        fn matchdo(&mut self) {
+            println!("{:#?}", self.queue);
+        }
+
+        fn settledo(&mut self) {
+            println!("{:#?}", self.queue);
         }
     }
 }
