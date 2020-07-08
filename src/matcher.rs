@@ -4,8 +4,8 @@ pub mod matcher {
     use std::sync::mpsc::{Receiver, Sender};
 
     pub trait Process {
-        fn matchdo(&mut self);
-        fn settledo(&mut self);
+        fn match_do(&mut self);
+        fn settle_do(&mut self);
     }
 
     struct Matcher<T> {
@@ -31,12 +31,14 @@ pub mod matcher {
     }
 
     impl<T> Process for Matcher<T> {
-        fn matchdo(&mut self) {
+        fn match_do(&mut self) {
             println!("{:#?}", self.queue);
         }
 
-        fn settledo(&mut self) {
-            println!("{:#?}", self.queue);
+        fn settle_do(&mut self) {
+            for rec in self.rx {
+                println!("settle: {}", rec);
+            }
         }
     }
 }
