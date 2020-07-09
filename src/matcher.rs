@@ -64,8 +64,9 @@ pub mod matcher {
 
             for i in ks.iter().rev() {
                 if v >= *i {
-                    match_update(odr, pcs, *i);
-                    let tmp = *odr;
+                    let mut tmp = *odr;
+                    tmp.qty = match_update(odr, pcs, *i);
+                    tmp.pc = (*i / ac) as f64;
                     &self.sx.send(tmp).unwrap();
                 }
             }
@@ -84,8 +85,9 @@ pub mod matcher {
 
             for i in ks.iter() {
                 if vk <= *i {
-                    match_update(odr, pcs, *i);
-                    let tmp = *odr;
+                    let mut tmp = *odr;
+                    tmp.qty = match_update(odr, pcs, *i);
+                    tmp.pc = (*i / ac) as f64;
                     &self.sx.send(tmp).unwrap();
                 }
             }
