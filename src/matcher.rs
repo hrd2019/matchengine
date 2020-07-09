@@ -1,6 +1,5 @@
 pub mod matcher {
-    use matchengine::{get_accuracy, qty, Asset, Odr, Queue, Side};
-    use std::borrow::Borrow;
+    use matchengine::{get_accuracy, Asset, Odr, Queue, Side};
     use std::collections::BTreeMap;
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
@@ -46,7 +45,6 @@ pub mod matcher {
             match odr.side {
                 Side::Bid => self.match_bid(&mut odr, ac),
                 Side::Ask => self.match_ask(&mut odr, ac),
-                _ => (),
             }
         }
 
@@ -99,16 +97,16 @@ pub mod matcher {
         }
     }
 
-    fn match_update(odr: &mut Odr, pcs: &mut BTreeMap<i64, f64>, firstV: i64) -> f64 {
-        let qty = pcs.get(&firstV);
+    fn match_update(odr: &mut Odr, pcs: &mut BTreeMap<i64, f64>, first_v: i64) -> f64 {
+        let qty = pcs.get(&first_v);
         let q = match qty {
             Some(t) => *t,
             None => 0.0,
         };
 
-        let mut stat = 0;
+        let stat;
         let left = odr.qty - q;
-        let mut vol = 0.0;
+        let vol;
 
         if left > 0.0 {
             stat = 1;
@@ -124,15 +122,15 @@ pub mod matcher {
         match stat {
             1 => {
                 odr.qty = left;
-                pcs.remove(&firstV);
+                pcs.remove(&first_v);
             }
             0 => {
                 odr.qty = 0.0;
-                pcs.remove(&firstV);
+                pcs.remove(&first_v);
             }
             -1 => {
                 odr.qty = 0.0;
-                pcs.insert(firstV, q - odr.qty);
+                pcs.insert(first_v, q - odr.qty);
             }
             _ => {}
         }

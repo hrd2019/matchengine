@@ -8,8 +8,8 @@ pub enum Asset {
     C(i64),
 }
 
-pub const AssetA: Asset = Asset::A(1000);
-pub const AssetB: Asset = Asset::B(1000);
+pub const ASSET_A: Asset = Asset::A(1000);
+pub const ASSET_B: Asset = Asset::B(1000);
 
 #[derive(Debug, Copy, Clone)]
 pub enum Side {
@@ -46,11 +46,11 @@ impl Odr {
     }
 }
 
-pub type qty = f64;
+pub type QTY = f64;
 
 #[derive(Debug)]
 pub struct Queue {
-    pub pcs: BTreeMap<i64, qty>,
+    pub pcs: BTreeMap<i64, QTY>,
     pub odrs: HashMap<i64, Box<Vec<Odr>>>,
     pub side: Side,
     pub pc: i64,
