@@ -108,17 +108,6 @@ pub mod matcher {
         let left = odr.qty - q;
         let mut vol = 0.0;
 
-        // if left > 0.0 {
-        //     stat = 1;
-        //     vol = q;
-        // } else if left == 0.0 {
-        //     stat = 0;
-        //     vol = q;
-        // } else {
-        //     stat = -1;
-        //     vol = odr.qty;
-        // }
-
         match left {
             l if l > 0.0 => {
                 vol = q;
