@@ -48,8 +48,6 @@ pub mod matcher {
                 Side::Ask => self.match_ask(&mut odr, ac),
                 _ => (),
             }
-
-            // &self.sx.send().unwrap();
         }
 
         fn settle_do(&self) {
@@ -63,10 +61,13 @@ pub mod matcher {
             let ks: Vec<i64> = pcs.keys().cloned().collect();
 
             let v = (odr.pc * ac as f64) as i64;
-            let minV = ks[ks.len() - 1];
 
-            if v >= minV {
-                match_update(odr, pcs, minV);
+            for i in ks.iter().rev() {
+                if v >= *i {
+                    match_update(odr, pcs, *i);
+                    let tmp = *odr;
+                    &self.sx.send(tmp).unwrap();
+                }
             }
 
             if odr.qty > 0.0 {
@@ -80,10 +81,13 @@ pub mod matcher {
             let ks: Vec<i64> = pcs.keys().cloned().collect();
 
             let vk = (odr.pc * ac as f64) as i64;
-            let maxV = ks[0];
 
-            if vk <= maxV {
-                match_update(odr, pcs, maxV);
+            for i in ks.iter() {
+                if vk <= *i {
+                    match_update(odr, pcs, *i);
+                    let tmp = *odr;
+                    &self.sx.send(tmp).unwrap();
+                }
             }
 
             if odr.qty > 0.0 {
