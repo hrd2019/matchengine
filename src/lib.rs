@@ -111,11 +111,11 @@ mod test {
 
         let mut q = Queue::new(Side::Bid);
 
-        let o1 = Odr::new(AssetA, 1.2, 0.45, Side::Bid);
-        let o2 = Odr::new(AssetA, 1.3, 0.45, Side::Bid);
-        let o3 = Odr::new(AssetA, 1.1, 0.45, Side::Bid);
-        let o4 = Odr::new(AssetA, 1.1, 1.45, Side::Bid);
-        let o5 = Odr::new(AssetA, 1.05, 1.45, Side::Bid);
+        let o1 = Odr::new(ASSET_A, 1.2, 0.45, Side::Bid);
+        let o2 = Odr::new(ASSET_A, 1.3, 0.45, Side::Bid);
+        let o3 = Odr::new(ASSET_A, 1.1, 0.45, Side::Bid);
+        let o4 = Odr::new(ASSET_A, 1.1, 1.45, Side::Bid);
+        let o5 = Odr::new(ASSET_A, 1.05, 1.45, Side::Bid);
 
         q.insert(o1);
         q.insert(o2);
@@ -123,7 +123,7 @@ mod test {
         q.insert(o4);
         q.insert(o5);
 
-        println!("{:#?}\n{:#?}\n{:#?}", q.odrs, q.pcs, q.pcl);
+        println!("{:#?}\n{:#?}", q.odrs, q.pcs);
     }
 }
 

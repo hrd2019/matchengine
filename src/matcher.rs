@@ -104,31 +104,34 @@ pub mod matcher {
             None => 0.0,
         };
 
-        let stat;
+        // let stat;
         let left = odr.qty - q;
-        let vol;
+        let mut vol = 0.0;
 
-        if left > 0.0 {
-            stat = 1;
-            vol = q;
-        } else if left == 0.0 {
-            stat = 0;
-            vol = q;
-        } else {
-            stat = -1;
-            vol = odr.qty;
-        }
+        // if left > 0.0 {
+        //     stat = 1;
+        //     vol = q;
+        // } else if left == 0.0 {
+        //     stat = 0;
+        //     vol = q;
+        // } else {
+        //     stat = -1;
+        //     vol = odr.qty;
+        // }
 
-        match stat {
-            1 => {
+        match left {
+            l if l > 0.0 => {
+                vol = q;
                 odr.qty = left;
                 pcs.remove(&first_v);
             }
-            0 => {
+            l if l == 0.0 => {
+                vol = q;
                 odr.qty = 0.0;
                 pcs.remove(&first_v);
             }
-            -1 => {
+            l if l < 0.0 => {
+                vol = odr.qty;
                 odr.qty = 0.0;
                 pcs.insert(first_v, q - odr.qty);
             }
