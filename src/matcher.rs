@@ -1,5 +1,3 @@
-use matchengine::Asset;
-
 pub mod matcher {
     use matchengine::{get_accuracy, qty, Asset, Odr, Queue, Side};
     use std::borrow::Borrow;
