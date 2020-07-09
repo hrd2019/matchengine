@@ -8,6 +8,12 @@ pub enum Asset {
     C(i64),
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum OptType {
+    DEAL,
+    CANCEL,
+}
+
 pub const ASSET_A: Asset = Asset::A(1000);
 pub const ASSET_B: Asset = Asset::B(1000);
 
@@ -23,6 +29,7 @@ pub struct Odr {
     pub pc: f64,
     pub qty: f64,
     pub side: Side,
+    pub opt: OptType,
     pub ts: SystemTime,
 }
 
@@ -35,9 +42,10 @@ pub struct Odr {
 // }
 
 impl Odr {
-    pub fn new(asset: Asset, pc: f64, qty: f64, side: Side) -> Odr {
+    pub fn new(asset: Asset, opt: OptType, pc: f64, qty: f64, side: Side) -> Odr {
         Odr {
             asset,
+            opt,
             pc,
             qty,
             side,
@@ -111,11 +119,11 @@ mod test {
 
         let mut q = Queue::new(Side::Bid);
 
-        let o1 = Odr::new(ASSET_A, 1.2, 0.45, Side::Bid);
-        let o2 = Odr::new(ASSET_A, 1.3, 0.45, Side::Bid);
-        let o3 = Odr::new(ASSET_A, 1.1, 0.45, Side::Bid);
-        let o4 = Odr::new(ASSET_A, 1.1, 1.45, Side::Bid);
-        let o5 = Odr::new(ASSET_A, 1.05, 1.45, Side::Bid);
+        let o1 = Odr::new(ASSET_A, OptType::DEAL, 1.2, 0.45, Side::Bid);
+        let o2 = Odr::new(ASSET_A, OptType::DEAL, 1.3, 0.45, Side::Bid);
+        let o3 = Odr::new(ASSET_A, OptType::DEAL, 1.1, 0.45, Side::Bid);
+        let o4 = Odr::new(ASSET_A, OptType::DEAL, 1.1, 1.45, Side::Bid);
+        let o5 = Odr::new(ASSET_A, OptType::DEAL, 1.05, 1.45, Side::Bid);
 
         q.insert(o1);
         q.insert(o2);
