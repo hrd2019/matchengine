@@ -104,7 +104,6 @@ pub mod matcher {
             None => 0.0,
         };
 
-        // let stat;
         let left = odr.qty - q;
         let mut vol = 0.0;
 
