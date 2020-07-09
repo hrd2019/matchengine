@@ -1,5 +1,5 @@
 pub mod matcher {
-    use matchengine::{get_accuracy, Asset, Odr, Queue, Side};
+    use matchengine::{get_accuracy, Asset, Odr, OptType, Queue, Side};
     use std::collections::BTreeMap;
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
@@ -42,9 +42,12 @@ pub mod matcher {
 
             let ac = get_accuracy(&odr.asset);
 
-            match odr.side {
-                Side::Bid => self.match_bid(&mut odr, ac),
-                Side::Ask => self.match_ask(&mut odr, ac),
+            match odr.opt {
+                OptType::DEAL => match odr.side {
+                    Side::Bid => self.match_bid(&mut odr, ac),
+                    Side::Ask => self.match_ask(&mut odr, ac),
+                },
+                OptType::CANCEL => {}
             }
         }
 
