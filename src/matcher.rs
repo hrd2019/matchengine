@@ -1,8 +1,9 @@
 use matchengine::Asset;
 
 pub mod matcher {
-    use matchengine::{get_accuracy, Asset, Odr, Queue, Side};
+    use matchengine::{get_accuracy, qty, Asset, Odr, Queue, Side};
     use std::borrow::Borrow;
+    use std::collections::BTreeMap;
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
 
@@ -65,45 +66,73 @@ pub mod matcher {
 
             let v = (odr.pc * ac as f64) as i64;
             let minV = ks[ks.len() - 1];
-            if v < minV {
-                return;
-            }
 
             if v >= minV {
-                let qty = pcs.get(&minV);
-                let q = match qty {
-                    Some(t) => *t,
-                    None => 0.0,
-                };
-
-                let o = odr.qty - q;
-                let mut a = 0;
-                if o > 0.0 {
-                    a = 1;
-                } else if o == 0.0 {
-                    a = 0;
-                } else {
-                    a = -1;
-                }
-
-                match a {
-                    1 => odr.qty = o,
-                    0 => {
-                        pcs.remove(&minV);
-                    }
-                    -1 => {
-                        pcs.insert(minV, q - odr.qty);
-                    }
-                    _ => {}
-                }
+                match_update(odr, pcs, minV);
             }
 
-            ();
+            if odr.qty > 0.0 {
+                let item = self.queue_bid.pcs.entry(v).or_insert(0.0);
+                *item += odr.qty;
+            }
         }
 
         fn match_ask(&mut self, odr: &mut Odr, ac: i64) {
-            let v = (odr.pc * ac as f64) as i64;
-            ()
+            let pcs = &mut self.queue_bid.pcs;
+            let ks: Vec<i64> = pcs.keys().cloned().collect();
+
+            let vk = (odr.pc * ac as f64) as i64;
+            let maxV = ks[0];
+
+            if vk <= maxV {
+                match_update(odr, pcs, maxV);
+            }
+
+            if odr.qty > 0.0 {
+                let item = self.queue_bid.pcs.entry(vk).or_insert(0.0);
+                *item += odr.qty;
+            }
         }
+    }
+
+    fn match_update(odr: &mut Odr, pcs: &mut BTreeMap<i64, f64>, firstV: i64) -> f64 {
+        let qty = pcs.get(&firstV);
+        let q = match qty {
+            Some(t) => *t,
+            None => 0.0,
+        };
+
+        let mut stat = 0;
+        let left = odr.qty - q;
+        let mut vol = 0.0;
+
+        if left > 0.0 {
+            stat = 1;
+            vol = q;
+        } else if left == 0.0 {
+            stat = 0;
+            vol = q;
+        } else {
+            stat = -1;
+            vol = odr.qty;
+        }
+
+        match stat {
+            1 => {
+                odr.qty = left;
+                pcs.remove(&firstV);
+            }
+            0 => {
+                odr.qty = 0.0;
+                pcs.remove(&firstV);
+            }
+            -1 => {
+                odr.qty = 0.0;
+                pcs.insert(firstV, q - odr.qty);
+            }
+            _ => {}
+        }
+
+        vol
     }
 }

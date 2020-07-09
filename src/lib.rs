@@ -46,7 +46,7 @@ impl Odr {
     }
 }
 
-type qty = f64;
+pub type qty = f64;
 
 #[derive(Debug)]
 pub struct Queue {
