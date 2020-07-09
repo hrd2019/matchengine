@@ -64,7 +64,7 @@ pub mod matcher {
             let v = (odr.pc * ac as f64) as i64;
 
             for i in ks.iter().rev() {
-                if v >= *i {
+                if v >= *i && odr.qty > 0.0 {
                     let mut tmp = *odr;
                     tmp.qty = match_update(odr, pcs, *i);
                     tmp.pc = (*i / ac) as f64;
@@ -85,7 +85,7 @@ pub mod matcher {
             let vk = (odr.pc * ac as f64) as i64;
 
             for i in ks.iter() {
-                if vk <= *i {
+                if vk <= *i && odr.qty > 0.0 {
                     let mut tmp = *odr;
                     tmp.qty = match_update(odr, pcs, *i);
                     tmp.pc = (*i / ac) as f64;
