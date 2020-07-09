@@ -122,7 +122,7 @@ pub mod matcher {
         match left {
             l if l > 0.0 => {
                 vol = q;
-                odr.qty = left;
+                odr.qty = l;
                 pcs.remove(&first_v);
             }
             l if l == 0.0 => {
