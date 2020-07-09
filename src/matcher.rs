@@ -9,8 +9,8 @@ pub mod matcher {
     pub trait Process {
         fn match_do(&mut self, odr: Odr);
         fn settle_do(&self);
-        fn match_bid(&mut self, odr: Odr, ac: i64);
-        fn match_ask(&mut self, odr: Odr, ac: i64);
+        fn match_bid(&mut self, odr: &mut Odr, ac: i64);
+        fn match_ask(&mut self, odr: &mut Odr, ac: i64);
     }
 
     struct Matcher {
@@ -39,14 +39,14 @@ pub mod matcher {
     }
 
     impl Process for Matcher {
-        fn match_do(&mut self, odr: Odr) {
-            println!("{:#?}", self.queue);
+        fn match_do(&mut self, mut odr: Odr) {
+            println!("{:#?}", self.queue_bid);
 
             let ac = get_accuracy(&odr.asset);
 
             match odr.side {
-                Side::Bid => self.match_ask(odr, ac),
-                Side::Ask => self.match_bid(odr, ac),
+                Side::Bid => self.match_bid(&mut odr, ac),
+                Side::Ask => self.match_ask(&mut odr, ac),
                 _ => (),
             }
 
@@ -59,17 +59,49 @@ pub mod matcher {
             }
         }
 
-        fn match_bid(&mut self, odr: Odr, ac: i64) {
-            let pcs = &self.queue.pcs;
-            let ks = pcs.keys().cloned().collect();
+        fn match_bid(&mut self, odr: &mut Odr, ac: i64) {
+            let pcs = &mut self.queue_ask.pcs;
+            let ks: Vec<i64> = pcs.keys().cloned().collect();
 
             let v = (odr.pc * ac as f64) as i64;
-            if v > ks[0] {}
+            let minV = ks[ks.len() - 1];
+            if v < minV {
+                return;
+            }
+
+            if v >= minV {
+                let qty = pcs.get(&minV);
+                let q = match qty {
+                    Some(t) => *t,
+                    None => 0.0,
+                };
+
+                let o = odr.qty - q;
+                let mut a = 0;
+                if o > 0.0 {
+                    a = 1;
+                } else if o == 0.0 {
+                    a = 0;
+                } else {
+                    a = -1;
+                }
+
+                match a {
+                    1 => odr.qty = o,
+                    0 => {
+                        pcs.remove(&minV);
+                    }
+                    -1 => {
+                        pcs.insert(minV, q - odr.qty);
+                    }
+                    _ => {}
+                }
+            }
 
             ();
         }
 
-        fn match_ask(&mut self, odr: Odr, ac: i64) {
+        fn match_ask(&mut self, odr: &mut Odr, ac: i64) {
             let v = (odr.pc * ac as f64) as i64;
             ()
         }
