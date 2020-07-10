@@ -65,12 +65,12 @@ pub mod matcher {
             let odrs = &mut self.queue_ask.odrs;
             let ks: Vec<i64> = pcs.keys().cloned().collect();
 
-            let v = (odr.pc * ac as f64) as i64;
+            let vk = (odr.pc * ac as f64) as i64;
 
             let mut is_ok = true;
 
             for i in ks.iter().rev() {
-                if v >= *i && odr.qty > 0.0 {
+                if vk >= *i && odr.qty > 0.0 {
                     let res = match_update(odr, odrs, pcs, *i);
                     match res {
                         Ok((x, y)) => {
