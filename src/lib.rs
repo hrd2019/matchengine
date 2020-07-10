@@ -82,7 +82,7 @@ impl Queue {
         let item = self.pcs.entry(k).or_insert(0.0);
         *item += odr.qty;
 
-        self.odrs.entry(k as u64).or_insert(odr);
+        self.odrs.entry(odr.id).or_insert(odr);
 
         // for i in self.pcl.iter() {
         // match self.side {

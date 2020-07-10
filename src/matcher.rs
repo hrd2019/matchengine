@@ -73,9 +73,6 @@ pub mod matcher {
             }
 
             if odr.qty > 0.0 {
-                let item = self.queue_bid.pcs.entry(v).or_insert(0.0);
-                *item += odr.qty;
-
                 self.queue_bid.insert(*odr)
             }
         }
@@ -96,9 +93,6 @@ pub mod matcher {
             }
 
             if odr.qty > 0.0 {
-                let item = self.queue_bid.pcs.entry(vk).or_insert(0.0);
-                *item += odr.qty;
-
                 self.queue_ask.insert(*odr)
             }
         }
