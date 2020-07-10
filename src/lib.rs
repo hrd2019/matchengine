@@ -14,6 +14,15 @@ pub enum OptType {
     CANCEL,
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct MatchPair {
+    pub bid_id: u64,
+    pub ask_id: u64,
+    pub pc: f64,
+    pub qty: f64,
+    pub ts: SystemTime,
+}
+
 pub const ASSET_A: Asset = Asset::A(1000);
 pub const ASSET_B: Asset = Asset::B(1000);
 
@@ -25,7 +34,7 @@ pub enum Side {
 
 #[derive(Debug, Copy, Clone)]
 pub struct Odr {
-    id: u64,
+    pub id: u64,
     pub asset: Asset,
     pub pc: f64,
     pub qty: f64,
@@ -61,7 +70,7 @@ pub type QTY = f64;
 #[derive(Debug)]
 pub struct Queue {
     pub pcs: BTreeMap<i64, QTY>,
-    pub odrs: HashMap<u64, Odr>,
+    pub odrs: HashMap<i64, Vec<Odr>>,
     pub side: Side,
     pub pc: i64,
 }
@@ -82,7 +91,8 @@ impl Queue {
         let item = self.pcs.entry(k).or_insert(0.0);
         *item += odr.qty;
 
-        self.odrs.entry(odr.id).or_insert(odr);
+        let v = self.odrs.entry(k).or_insert(vec![]);
+        v.push(odr)
 
         // for i in self.pcl.iter() {
         // match self.side {

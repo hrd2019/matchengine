@@ -1,8 +1,10 @@
 pub mod matcher {
-    use matchengine::{get_accuracy, Asset, Odr, OptType, Queue, Side};
-    use std::collections::BTreeMap;
+    use matchengine::{get_accuracy, Asset, MatchPair, Odr, OptType, Queue, Side};
+    use std::borrow::BorrowMut;
+    use std::collections::{BTreeMap, HashMap};
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
+    use std::time::SystemTime;
 
     pub trait Process {
         fn match_do(&mut self, odr: Odr);
@@ -16,8 +18,8 @@ pub mod matcher {
         value_asset: Asset,
         queue_bid: Queue,
         queue_ask: Queue,
-        sx: Sender<Odr>,
-        rx: Receiver<Odr>,
+        sx: Sender<MatchPair>,
+        rx: Receiver<MatchPair>,
     }
 
     impl Matcher {
@@ -59,16 +61,23 @@ pub mod matcher {
 
         fn match_bid(&mut self, odr: &mut Odr, ac: i64) {
             let pcs = &mut self.queue_ask.pcs;
+            let odrs = &mut self.queue_ask.odrs;
             let ks: Vec<i64> = pcs.keys().cloned().collect();
 
             let v = (odr.pc * ac as f64) as i64;
 
             for i in ks.iter().rev() {
                 if v >= *i && odr.qty > 0.0 {
-                    let mut tmp = *odr;
-                    tmp.qty = match_update(odr, pcs, *i);
-                    tmp.pc = (*i / ac) as f64;
-                    &self.sx.send(tmp).unwrap();
+                    let v = match_update(odr, odrs, pcs, *i);
+                    let pair = MatchPair {
+                        bid_id: odr.id,
+                        ask_id: v.0,
+                        pc: (*i / ac) as f64,
+                        qty: v.1,
+                        ts: SystemTime::now(),
+                    };
+
+                    &self.sx.send(pair).unwrap();
                 }
             }
 
@@ -79,16 +88,23 @@ pub mod matcher {
 
         fn match_ask(&mut self, odr: &mut Odr, ac: i64) {
             let pcs = &mut self.queue_bid.pcs;
+            let odrs = &mut self.queue_bid.odrs;
             let ks: Vec<i64> = pcs.keys().cloned().collect();
 
             let vk = (odr.pc * ac as f64) as i64;
 
             for i in ks.iter() {
                 if vk <= *i && odr.qty > 0.0 {
-                    let mut tmp = *odr;
-                    tmp.qty = match_update(odr, pcs, *i);
-                    tmp.pc = (*i / ac) as f64;
-                    &self.sx.send(tmp).unwrap();
+                    let v = match_update(odr, odrs, pcs, *i);
+                    let pair = MatchPair {
+                        bid_id: v.0,
+                        ask_id: odr.id,
+                        pc: (*i / ac) as f64,
+                        qty: v.1,
+                        ts: SystemTime::now(),
+                    };
+
+                    &self.sx.send(pair).unwrap();
                 }
             }
 
@@ -98,7 +114,12 @@ pub mod matcher {
         }
     }
 
-    fn match_update(odr: &mut Odr, pcs: &mut BTreeMap<i64, f64>, first_v: i64) -> f64 {
+    fn match_update(
+        odr: &mut Odr,
+        odrs: &mut HashMap<i64, Vec<Odr>>,
+        pcs: &mut BTreeMap<i64, f64>,
+        first_v: i64,
+    ) -> (u64, f64) {
         let qty = pcs.get(&first_v);
         let q = match qty {
             Some(t) => *t,
@@ -127,6 +148,23 @@ pub mod matcher {
             _ => {}
         }
 
-        vol
+        let mut order_id = 0;
+        let col = odrs.get_mut(&first_v);
+        if let Some(list) = col {
+            if odr.qty == 0.0 {
+                if let Some(v) = list.pop() {
+                    order_id = v.id;
+                }
+            } else {
+                if let Some(v) = list.get_mut(0) {
+                    order_id = v.id;
+                    if v.qty != 0.0 {
+                        v.qty = odr.qty;
+                    }
+                }
+            }
+        };
+
+        (order_id, vol)
     }
 }
