@@ -25,6 +25,7 @@ pub enum Side {
 
 #[derive(Debug, Copy, Clone)]
 pub struct Odr {
+    id: u64,
     pub asset: Asset,
     pub pc: f64,
     pub qty: f64,
@@ -42,8 +43,9 @@ pub struct Odr {
 // }
 
 impl Odr {
-    pub fn new(asset: Asset, opt: OptType, pc: f64, qty: f64, side: Side) -> Odr {
+    pub fn new(id: u64, asset: Asset, opt: OptType, pc: f64, qty: f64, side: Side) -> Odr {
         Odr {
+            id,
             asset,
             opt,
             pc,
@@ -59,7 +61,7 @@ pub type QTY = f64;
 #[derive(Debug)]
 pub struct Queue {
     pub pcs: BTreeMap<i64, QTY>,
-    pub odrs: HashMap<i64, Box<Vec<Odr>>>,
+    pub odrs: HashMap<u64, Odr>,
     pub side: Side,
     pub pc: i64,
 }
@@ -80,8 +82,7 @@ impl Queue {
         let item = self.pcs.entry(k).or_insert(0.0);
         *item += odr.qty;
 
-        let item = self.odrs.entry(k).or_insert(Box::new(vec![]));
-        item.push(odr);
+        self.odrs.entry(k as u64).or_insert(odr);
 
         // for i in self.pcl.iter() {
         // match self.side {
@@ -119,11 +120,11 @@ mod test {
 
         let mut q = Queue::new(Side::Bid);
 
-        let o1 = Odr::new(ASSET_A, OptType::DEAL, 1.2, 0.45, Side::Bid);
-        let o2 = Odr::new(ASSET_A, OptType::DEAL, 1.3, 0.45, Side::Bid);
-        let o3 = Odr::new(ASSET_A, OptType::DEAL, 1.1, 0.45, Side::Bid);
-        let o4 = Odr::new(ASSET_A, OptType::DEAL, 1.1, 1.45, Side::Bid);
-        let o5 = Odr::new(ASSET_A, OptType::DEAL, 1.05, 1.45, Side::Bid);
+        let o1 = Odr::new(1, ASSET_A, OptType::DEAL, 1.2, 0.45, Side::Bid);
+        let o2 = Odr::new(2, ASSET_A, OptType::DEAL, 1.3, 0.45, Side::Bid);
+        let o3 = Odr::new(3, ASSET_A, OptType::DEAL, 1.1, 0.45, Side::Bid);
+        let o4 = Odr::new(4, ASSET_A, OptType::DEAL, 1.1, 1.45, Side::Bid);
+        let o5 = Odr::new(5, ASSET_A, OptType::DEAL, 1.05, 1.45, Side::Bid);
 
         q.insert(o1);
         q.insert(o2);
