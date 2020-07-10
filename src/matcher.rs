@@ -114,12 +114,10 @@ pub mod matcher {
         }
     }
 
-    fn match_update(
-        odr: &mut Odr,
-        odrs: &mut HashMap<i64, Vec<Odr>>,
-        pcs: &mut BTreeMap<i64, f64>,
-        first_v: i64,
-    ) -> (u64, f64) {
+    type Cols = HashMap<i64, Vec<Odr>>;
+    type Deep = BTreeMap<i64, f64>;
+
+    fn match_update(odr: &mut Odr, odrs: &mut Cols, pcs: &mut Deep, first_v: i64) -> (u64, f64) {
         let qty = pcs.get(&first_v);
         let q = match qty {
             Some(t) => *t,
