@@ -2,6 +2,7 @@ pub mod matcher {
     use matchengine::{get_accuracy, Asset, MatchPair, Odr, OptType, Queue, Side};
     use std::borrow::BorrowMut;
     use std::collections::{BTreeMap, HashMap};
+    use std::io;
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
     use std::time::SystemTime;
@@ -66,22 +67,35 @@ pub mod matcher {
 
             let v = (odr.pc * ac as f64) as i64;
 
+            let mut is_ok = true;
+
             for i in ks.iter().rev() {
                 if v >= *i && odr.qty > 0.0 {
-                    let v = match_update(odr, odrs, pcs, *i);
-                    let pair = MatchPair {
-                        bid_id: odr.id,
-                        ask_id: v.0,
-                        pc: (*i / ac) as f64,
-                        qty: v.1,
-                        ts: SystemTime::now(),
-                    };
+                    let res = match_update(odr, odrs, pcs, *i);
+                    match res {
+                        Ok((x, y)) => {
+                            let pair = MatchPair {
+                                bid_id: odr.id,
+                                ask_id: x,
+                                pc: (*i / ac) as f64,
+                                qty: y,
+                                ts: SystemTime::now(),
+                            };
 
-                    &self.sx.send(pair).unwrap();
+                            &self.sx.send(pair).unwrap();
+                        }
+                        Err(E) => {
+                            println!("err {}", E);
+                            is_ok = false;
+                            break;
+                        }
+                    }
+                } else {
+                    break;
                 }
             }
 
-            if odr.qty > 0.0 {
+            if is_ok && odr.qty > 0.0 {
                 self.queue_bid.insert(*odr)
             }
         }
@@ -93,22 +107,35 @@ pub mod matcher {
 
             let vk = (odr.pc * ac as f64) as i64;
 
+            let mut is_ok = true;
+
             for i in ks.iter() {
                 if vk <= *i && odr.qty > 0.0 {
-                    let v = match_update(odr, odrs, pcs, *i);
-                    let pair = MatchPair {
-                        bid_id: v.0,
-                        ask_id: odr.id,
-                        pc: (*i / ac) as f64,
-                        qty: v.1,
-                        ts: SystemTime::now(),
-                    };
+                    let res = match_update(odr, odrs, pcs, *i);
+                    match res {
+                        Ok((x, y)) => {
+                            let pair = MatchPair {
+                                bid_id: x,
+                                ask_id: odr.id,
+                                pc: (*i / ac) as f64,
+                                qty: y,
+                                ts: SystemTime::now(),
+                            };
 
-                    &self.sx.send(pair).unwrap();
+                            &self.sx.send(pair).unwrap();
+                        }
+                        Err(E) => {
+                            println!("err {}", E);
+                            is_ok = false;
+                            break;
+                        }
+                    }
+                } else {
+                    break;
                 }
             }
 
-            if odr.qty > 0.0 {
+            if is_ok && odr.qty > 0.0 {
                 self.queue_ask.insert(*odr)
             }
         }
@@ -117,12 +144,22 @@ pub mod matcher {
     type Cols = HashMap<i64, Vec<Odr>>;
     type Deep = BTreeMap<i64, f64>;
 
-    fn match_update(odr: &mut Odr, odrs: &mut Cols, pcs: &mut Deep, first_v: i64) -> (u64, f64) {
+    fn match_update(
+        odr: &mut Odr,
+        odrs: &mut Cols,
+        pcs: &mut Deep,
+        first_v: i64,
+    ) -> Result<(u64, f64), String> {
         let qty = pcs.get(&first_v);
         let q = match qty {
             Some(t) => *t,
             None => 0.0,
         };
+
+        if q == 0.0 {
+            let s = format!("invalid data {}", q);
+            return Err(s);
+        }
 
         let left = odr.qty - q;
         let mut vol = 0.0;
@@ -163,6 +200,6 @@ pub mod matcher {
             }
         };
 
-        (order_id, vol)
+        Ok((order_id, vol))
     }
 }
