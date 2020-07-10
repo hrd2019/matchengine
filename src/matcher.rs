@@ -1,8 +1,6 @@
 pub mod matcher {
     use matchengine::{get_accuracy, Asset, MatchPair, Odr, OptType, Queue, Side};
-    use std::borrow::BorrowMut;
     use std::collections::{BTreeMap, HashMap};
-    use std::io;
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
     use std::time::SystemTime;
@@ -84,8 +82,8 @@ pub mod matcher {
 
                             &self.sx.send(pair).unwrap();
                         }
-                        Err(E) => {
-                            println!("err {}", E);
+                        Err(e) => {
+                            println!("err {}", e);
                             is_ok = false;
                             break;
                         }
@@ -124,8 +122,8 @@ pub mod matcher {
 
                             &self.sx.send(pair).unwrap();
                         }
-                        Err(E) => {
-                            println!("err {}", E);
+                        Err(e) => {
+                            println!("err {}", e);
                             is_ok = false;
                             break;
                         }
