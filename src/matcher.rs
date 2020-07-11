@@ -172,7 +172,7 @@ pub mod matcher {
         let mut qty = *pcs.get(&vk).expect("no match data");
 
         let list = odrs.get_mut(&vk).expect("no list");
-        let target = list.get_mut(0).expect("no data");
+        let mut target = list.get(0).cloned().expect("no data");
 
         let left = odr.qty - target.qty;
         let mut vol = 0.0;
@@ -196,6 +196,9 @@ pub mod matcher {
         target.qty -= vol;
         if target.qty == 0.0 {
             list.remove(0);
+        } else {
+            let mut target = list.get_mut(0).expect("no data");
+            target.qty -= vol;
         }
 
         qty -= vol;
