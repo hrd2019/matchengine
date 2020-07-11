@@ -22,13 +22,13 @@ pub mod matcher {
     }
 
     impl Matcher {
-        pub fn new(c: Asset, v: Asset) -> Matcher {
+        pub fn new(curcy_asset: Asset, value_asset: Asset) -> Matcher {
             let queue_bid = Queue::new(Side::Bid);
             let queue_ask = Queue::new(Side::Ask);
             let (sx, rx) = mpsc::channel();
             Matcher {
-                curcy_asset: c,
-                value_asset: v,
+                curcy_asset,
+                value_asset,
                 queue_bid,
                 queue_ask,
                 sx: sx,
@@ -48,7 +48,22 @@ pub mod matcher {
                     Side::Bid => self.match_bid(&mut odr, ac),
                     Side::Ask => self.match_ask(&mut odr, ac),
                 },
-                OptType::CANCEL => {}
+                OptType::CANCEL => {
+                    let vk = (odr.pc * ac as f64) as i64;
+                    let odrs = &mut self.queue_ask.odrs;
+
+                    match odrs.get_mut(&vk) {
+                        Some(o) => {
+                            for (index, item) in o.iter().enumerate() {
+                                if item.id == odr.id {
+                                    o.remove(index);
+                                    break;
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
             }
         }
 
