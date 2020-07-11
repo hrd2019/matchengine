@@ -50,29 +50,24 @@ pub mod matcher {
                 },
                 OptType::CANCEL => {
                     let vk = (odr.pc * ac as f64) as i64;
-                    let odrs = &mut self.queue_ask.odrs;
 
-                    match odrs.get_mut(&vk) {
-                        Some(o) => {
-                            for (index, item) in o.iter().enumerate() {
-                                if item.id == odr.id {
-                                    o.remove(index);
-
-                                    match odr.side {
-                                        Side::Ask => {
-                                            let mut pcs = self.queue_ask.pcs.entry(vk).or_default();
-                                            *pcs -= odr.qty;
-                                        }
-                                        Side::Bid => {
-                                            let mut pcs = self.queue_bid.pcs.entry(vk).or_default();
-                                            *pcs -= odr.qty;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
+                    match odr.side {
+                        Side::Ask => {
+                            match_cancel(
+                                &odr,
+                                &mut self.queue_ask.odrs,
+                                &mut self.queue_ask.pcs,
+                                vk,
+                            );
                         }
-                        _ => {}
+                        Side::Bid => {
+                            match_cancel(
+                                &odr,
+                                &mut self.queue_bid.odrs,
+                                &mut self.queue_bid.pcs,
+                                vk,
+                            );
+                        }
                     }
                 }
             }
@@ -225,5 +220,23 @@ pub mod matcher {
         };
 
         Ok((order_id, vol))
+    }
+
+    fn match_cancel(odr: &Odr, odrs: &mut Cols, pcs: &mut Deep, vk: i64) {
+        let mut pcs = pcs.entry(vk).or_default();
+        *pcs -= odr.qty;
+
+        let odrs = odrs.get_mut(&vk);
+        match odrs {
+            Some(list) => {
+                for (index, item) in list.iter().enumerate() {
+                    if item.id == odr.id {
+                        list.remove(index);
+                        break;
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 }
