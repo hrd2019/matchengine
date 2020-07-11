@@ -57,6 +57,17 @@ pub mod matcher {
                             for (index, item) in o.iter().enumerate() {
                                 if item.id == odr.id {
                                     o.remove(index);
+
+                                    match odr.side {
+                                        Side::Ask => {
+                                            let mut pcs = self.queue_ask.pcs.entry(vk).or_default();
+                                            *pcs -= odr.qty;
+                                        }
+                                        Side::Bid => {
+                                            let mut pcs = self.queue_bid.pcs.entry(vk).or_default();
+                                            *pcs -= odr.qty;
+                                        }
+                                    }
                                     break;
                                 }
                             }
