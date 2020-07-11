@@ -167,59 +167,45 @@ pub mod matcher {
         odr: &mut Odr,
         odrs: &mut Cols,
         pcs: &mut Deep,
-        first_v: i64,
+        vk: i64,
     ) -> Result<(u64, f64), String> {
-        let qty = pcs.get(&first_v);
-        let q = match qty {
-            Some(t) => *t,
-            None => 0.0,
-        };
+        let mut qty = *pcs.get(&vk).expect("no match data");
 
-        if q == 0.0 {
-            let s = format!("invalid data {}", q);
-            return Err(s);
-        }
+        let list = odrs.get_mut(&vk).expect("no list");
+        let target = list.get_mut(0).expect("no data");
 
-        let left = odr.qty - q;
+        let left = odr.qty - target.qty;
         let mut vol = 0.0;
 
         match left {
             l if l > 0.0 => {
-                vol = q;
+                vol = target.qty;
                 odr.qty = l;
-                pcs.remove(&first_v);
             }
             l if l == 0.0 => {
-                vol = q;
+                vol = target.qty;
                 odr.qty = 0.0;
-                pcs.remove(&first_v);
             }
             l if l < 0.0 => {
                 vol = odr.qty;
                 odr.qty = 0.0;
-                pcs.insert(first_v, q - odr.qty);
             }
             _ => {}
         }
 
-        let mut order_id = 0;
-        let col = odrs.get_mut(&first_v);
-        if let Some(list) = col {
-            if odr.qty == 0.0 {
-                if let Some(v) = list.pop() {
-                    order_id = v.id;
-                }
-            } else {
-                if let Some(v) = list.get_mut(0) {
-                    order_id = v.id;
-                    if v.qty != 0.0 {
-                        v.qty = odr.qty;
-                    }
-                }
-            }
-        };
+        target.qty -= vol;
+        if target.qty == 0.0 {
+            list.remove(0);
+        }
 
-        Ok((order_id, vol))
+        qty -= vol;
+        if qty != 0.0 {
+            pcs.insert(vk, qty);
+        } else {
+            pcs.remove(&vk);
+        }
+
+        Ok((target.id, vol))
     }
 
     fn match_cancel(odr: &Odr, odrs: &mut Cols, pcs: &mut Deep, vk: i64) {
