@@ -63,7 +63,7 @@ pub mod matcher {
         }
 
         fn match_deal(&mut self, odr: &mut Odr, ac: i64) {
-            let mut index = get_index(&mut self.queue_ask, &mut self.queue_bid, &odr);
+            let mut index = get_index(true, &mut self.queue_ask, &mut self.queue_bid, &odr);
             let ks: Vec<i64> = index.0.keys().cloned().collect();
             let vk = (odr.pc * ac as f64) as i64;
             let mut is_ok = true;
@@ -96,7 +96,7 @@ pub mod matcher {
         }
 
         fn match_cancel(&mut self, odr: &mut Odr, vk: i64) {
-            let index = get_index(&mut self.queue_ask, &mut self.queue_bid, &odr);
+            let index = get_index(false, &mut self.queue_ask, &mut self.queue_bid, &odr);
             let odrs = index.1.get_mut(&vk);
             match odrs {
                 Some(list) => {
@@ -198,23 +198,47 @@ pub mod matcher {
         is_ok
     }
 
-    fn get_index<'a>(queue_ask: &'a mut Queue, queue_bid: &'a mut Queue, odr: &Odr) -> Index<'a> {
-        let index: Index = match odr.side {
-            Side::Bid => {
-                let pcs = &mut queue_ask.pcs;
-                let odrs = &mut queue_ask.odrs;
+    fn get_index<'a>(
+        is_trade: bool,
+        queue_ask: &'a mut Queue,
+        queue_bid: &'a mut Queue,
+        odr: &Odr,
+    ) -> Index<'a> {
+        if is_trade {
+            let index: Index = match odr.side {
+                Side::Bid => {
+                    let pcs = &mut queue_ask.pcs;
+                    let odrs = &mut queue_ask.odrs;
 
-                (pcs, odrs)
-            }
-            Side::Ask => {
-                let pcs = &mut queue_bid.pcs;
-                let odrs = &mut queue_bid.odrs;
+                    (pcs, odrs)
+                }
+                Side::Ask => {
+                    let pcs = &mut queue_bid.pcs;
+                    let odrs = &mut queue_bid.odrs;
 
-                (pcs, odrs)
-            }
-        };
+                    (pcs, odrs)
+                }
+            };
 
-        index
+            index
+        } else {
+            let index: Index = match odr.side {
+                Side::Bid => {
+                    let pcs = &mut queue_bid.pcs;
+                    let odrs = &mut queue_bid.odrs;
+
+                    (pcs, odrs)
+                }
+                Side::Ask => {
+                    let pcs = &mut queue_ask.pcs;
+                    let odrs = &mut queue_ask.odrs;
+
+                    (pcs, odrs)
+                }
+            };
+
+            index
+        }
     }
 
     fn update_odr(queue_ask: &mut Queue, queue_bid: &mut Queue, odr: &Odr) {
