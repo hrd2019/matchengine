@@ -63,7 +63,7 @@ pub mod matcher {
         }
 
         fn match_deal(&mut self, odr: &mut Odr, ac: i64) {
-            let index = get_index(&mut self.queue_ask, &mut self.queue_bid, &odr);
+            let mut index = get_index(&mut self.queue_ask, &mut self.queue_bid, &odr);
             let ks: Vec<i64> = index.0.keys().cloned().collect();
             let vk = (odr.pc * ac as f64) as i64;
             let mut is_ok = true;
@@ -72,13 +72,13 @@ pub mod matcher {
                 TradeType::Limited => {
                     let i = ks.get(0).cloned().expect("");
                     if i == vk && odr.qty > 0.0 {
-                        is_ok = match_send(odr, index.1, index.0, i, ac, &mut self.sx);
+                        is_ok = match_send(odr, &mut index, i, ac, &mut self.sx);
                     }
                 }
                 TradeType::Market => {
                     for i in ks.iter() {
                         if vk <= *i && odr.qty > 0.0 {
-                            is_ok = match_send(odr, index.1, index.0, *i, ac, &mut self.sx);
+                            is_ok = match_send(odr, &mut index, *i, ac, &mut self.sx);
                         } else {
                             break;
                         }
@@ -91,14 +91,7 @@ pub mod matcher {
             }
 
             if is_ok && odr.qty > 0.0 {
-                match odr.side {
-                    Side::Ask => {
-                        self.queue_ask.insert(*odr);
-                    }
-                    Side::Bid => {
-                        self.queue_bid.insert(*odr);
-                    }
-                }
+                update_odr(&mut self.queue_ask, &mut self.queue_bid, odr)
             }
         }
 
@@ -123,16 +116,8 @@ pub mod matcher {
         }
     }
 
-    type Cols = HashMap<i64, Vec<Odr>>;
-    type Deep = BTreeMap<i64, f64>;
-
-    fn match_update(
-        odr: &mut Odr,
-        odrs: &mut Cols,
-        pcs: &mut Deep,
-        vk: i64,
-    ) -> Result<(u64, f64), String> {
-        let list = odrs.get_mut(&vk).expect("no match list");
+    fn match_update(odr: &mut Odr, index: &mut Index, vk: i64) -> Result<(u64, f64), String> {
+        let list = index.1.get_mut(&vk).expect("no match list");
         let mut target = list.get(0).cloned().expect("no data");
 
         let left = odr.qty - target.qty;
@@ -162,12 +147,12 @@ pub mod matcher {
             o.qty = target.qty;
         }
 
-        let mut qty = *pcs.get(&vk).expect("no match data");
+        let mut qty = *index.0.get(&vk).expect("no match data");
         qty -= vol;
         if qty != 0.0 {
-            pcs.insert(vk, qty);
+            index.0.insert(vk, qty);
         } else {
-            pcs.remove(&vk);
+            index.0.remove(&vk);
         }
 
         Ok((target.id, vol))
@@ -175,15 +160,14 @@ pub mod matcher {
 
     fn match_send(
         odr: &mut Odr,
-        odrs: &mut Cols,
-        pcs: &mut Deep,
+        index: &mut Index,
         vk: i64,
         ac: i64,
         sx: &mut Sender<MatchPair>,
     ) -> bool {
         let mut is_ok = true;
 
-        let res = match_update(odr, odrs, pcs, vk);
+        let res = match_update(odr, index, vk);
         match res {
             Ok((x, y)) => {
                 let pair = match odr.side {
@@ -231,5 +215,16 @@ pub mod matcher {
         };
 
         index
+    }
+
+    fn update_odr(queue_ask: &mut Queue, queue_bid: &mut Queue, odr: &Odr) {
+        match odr.side {
+            Side::Ask => {
+                queue_ask.insert(*odr);
+            }
+            Side::Bid => {
+                queue_bid.insert(*odr);
+            }
+        }
     }
 }
