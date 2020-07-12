@@ -215,12 +215,21 @@ pub mod matcher {
         let res = match_update(odr, odrs, pcs, vk);
         match res {
             Ok((x, y)) => {
-                let pair = MatchPair {
-                    bid_id: x,
-                    ask_id: odr.id,
-                    pc: (vk / ac) as f64,
-                    qty: y,
-                    ts: SystemTime::now(),
+                let pair = match odr.side {
+                    Side::Bid => MatchPair {
+                        bid_id: odr.id,
+                        ask_id: x,
+                        pc: (vk / ac) as f64,
+                        qty: y,
+                        ts: SystemTime::now(),
+                    },
+                    Side::Ask => MatchPair {
+                        bid_id: x,
+                        ask_id: odr.id,
+                        pc: (vk / ac) as f64,
+                        qty: y,
+                        ts: SystemTime::now(),
+                    },
                 };
 
                 sx.send(pair).unwrap();
