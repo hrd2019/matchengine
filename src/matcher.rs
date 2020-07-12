@@ -1,5 +1,5 @@
 pub mod matcher {
-    use matchengine::{get_accuracy, Asset, MatchPair, Odr, OptType, Queue, Side};
+    use matchengine::{get_accuracy, Asset, MatchPair, Odr, OptType, Queue, Side, TradeType};
     use std::collections::{BTreeMap, HashMap};
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
@@ -88,29 +88,25 @@ pub mod matcher {
 
             let mut is_ok = true;
 
-            for i in ks.iter().rev() {
-                if vk >= *i && odr.qty > 0.0 {
-                    let res = match_update(odr, odrs, pcs, *i);
-                    match res {
-                        Ok((x, y)) => {
-                            let pair = MatchPair {
-                                bid_id: odr.id,
-                                ask_id: x,
-                                pc: (*i / ac) as f64,
-                                qty: y,
-                                ts: SystemTime::now(),
-                            };
-
-                            &self.sx.send(pair).unwrap();
+            match odr.trade {
+                TradeType::Limited => {
+                    let i = ks.get(0).cloned().expect("");
+                    if i == vk && odr.qty > 0.0 {
+                        is_ok = match_send(odr, odrs, pcs, i, ac, &mut self.sx);
+                    }
+                }
+                TradeType::Market => {
+                    for i in ks.iter() {
+                        if vk >= *i && odr.qty > 0.0 {
+                            is_ok = match_send(odr, odrs, pcs, *i, ac, &mut self.sx);
+                        } else {
+                            break;
                         }
-                        Err(e) => {
-                            println!("err {}", e);
-                            is_ok = false;
+
+                        if !is_ok {
                             break;
                         }
                     }
-                } else {
-                    break;
                 }
             }
 
@@ -128,29 +124,25 @@ pub mod matcher {
 
             let mut is_ok = true;
 
-            for i in ks.iter() {
-                if vk <= *i && odr.qty > 0.0 {
-                    let res = match_update(odr, odrs, pcs, *i);
-                    match res {
-                        Ok((x, y)) => {
-                            let pair = MatchPair {
-                                bid_id: x,
-                                ask_id: odr.id,
-                                pc: (*i / ac) as f64,
-                                qty: y,
-                                ts: SystemTime::now(),
-                            };
-
-                            &self.sx.send(pair).unwrap();
+            match odr.trade {
+                TradeType::Limited => {
+                    let i = ks.get(0).cloned().expect("");
+                    if i == vk && odr.qty > 0.0 {
+                        is_ok = match_send(odr, odrs, pcs, i, ac, &mut self.sx);
+                    }
+                }
+                TradeType::Market => {
+                    for i in ks.iter() {
+                        if vk <= *i && odr.qty > 0.0 {
+                            is_ok = match_send(odr, odrs, pcs, *i, ac, &mut self.sx);
+                        } else {
+                            break;
                         }
-                        Err(e) => {
-                            println!("err {}", e);
-                            is_ok = false;
+
+                        if !is_ok {
                             break;
                         }
                     }
-                } else {
-                    break;
                 }
             }
 
@@ -197,8 +189,8 @@ pub mod matcher {
         if target.qty == 0.0 {
             list.remove(0);
         } else {
-            let mut target = list.get_mut(0).expect("no data");
-            target.qty -= vol;
+            let mut o = list.get_mut(0).expect("no data");
+            o.qty = target.qty;
         }
 
         qty -= vol;
@@ -209,6 +201,38 @@ pub mod matcher {
         }
 
         Ok((target.id, vol))
+    }
+
+    fn match_send(
+        odr: &mut Odr,
+        odrs: &mut Cols,
+        pcs: &mut Deep,
+        vk: i64,
+        ac: i64,
+        sx: &mut Sender<MatchPair>,
+    ) -> bool {
+        let mut is_ok = true;
+
+        let res = match_update(odr, odrs, pcs, vk);
+        match res {
+            Ok((x, y)) => {
+                let pair = MatchPair {
+                    bid_id: x,
+                    ask_id: odr.id,
+                    pc: (vk / ac) as f64,
+                    qty: y,
+                    ts: SystemTime::now(),
+                };
+
+                sx.send(pair).unwrap();
+            }
+            Err(e) => {
+                println!("err {}", e);
+                is_ok = false;
+            }
+        }
+
+        is_ok
     }
 
     fn match_cancel(odr: &Odr, odrs: &mut Cols, pcs: &mut Deep, vk: i64) {

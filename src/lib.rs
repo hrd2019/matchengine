@@ -15,6 +15,12 @@ pub enum OptType {
 }
 
 #[derive(Debug, Copy, Clone)]
+pub enum TradeType {
+    Limited,
+    Market,
+}
+
+#[derive(Debug, Copy, Clone)]
 pub struct MatchPair {
     pub bid_id: u64,
     pub ask_id: u64,
@@ -36,6 +42,7 @@ pub enum Side {
 pub struct Odr {
     pub id: u64,
     pub asset: Asset,
+    pub trade: TradeType,
     pub pc: f64,
     pub qty: f64,
     pub side: Side,
@@ -52,10 +59,19 @@ pub struct Odr {
 // }
 
 impl Odr {
-    pub fn new(id: u64, asset: Asset, opt: OptType, pc: f64, qty: f64, side: Side) -> Odr {
+    pub fn new(
+        id: u64,
+        asset: Asset,
+        trade: TradeType,
+        opt: OptType,
+        pc: f64,
+        qty: f64,
+        side: Side,
+    ) -> Odr {
         Odr {
             id,
             asset,
+            trade,
             opt,
             pc,
             qty,
@@ -130,11 +146,51 @@ mod test {
 
         let mut q = Queue::new(Side::Bid);
 
-        let o1 = Odr::new(1, ASSET_A, OptType::DEAL, 1.2, 0.45, Side::Bid);
-        let o2 = Odr::new(2, ASSET_A, OptType::DEAL, 1.3, 0.45, Side::Bid);
-        let o3 = Odr::new(3, ASSET_A, OptType::DEAL, 1.1, 0.45, Side::Bid);
-        let o4 = Odr::new(4, ASSET_A, OptType::DEAL, 1.1, 1.45, Side::Bid);
-        let o5 = Odr::new(5, ASSET_A, OptType::DEAL, 1.05, 1.45, Side::Bid);
+        let o1 = Odr::new(
+            1,
+            ASSET_A,
+            TradeType::Market,
+            OptType::DEAL,
+            1.2,
+            0.45,
+            Side::Bid,
+        );
+        let o2 = Odr::new(
+            2,
+            ASSET_A,
+            TradeType::Market,
+            OptType::DEAL,
+            1.3,
+            0.45,
+            Side::Bid,
+        );
+        let o3 = Odr::new(
+            3,
+            ASSET_A,
+            TradeType::Market,
+            OptType::DEAL,
+            1.1,
+            0.45,
+            Side::Bid,
+        );
+        let o4 = Odr::new(
+            4,
+            ASSET_A,
+            TradeType::Market,
+            OptType::DEAL,
+            1.1,
+            1.45,
+            Side::Bid,
+        );
+        let o5 = Odr::new(
+            5,
+            ASSET_A,
+            TradeType::Market,
+            OptType::DEAL,
+            1.05,
+            1.45,
+            Side::Bid,
+        );
 
         q.insert(o1);
         q.insert(o2);
