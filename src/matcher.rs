@@ -161,8 +161,6 @@ pub mod matcher {
         pcs: &mut Deep,
         vk: i64,
     ) -> Result<(u64, f64), String> {
-        let mut qty = *pcs.get(&vk).expect("no match data");
-
         let list = odrs.get_mut(&vk).expect("no match list");
         let mut target = list.get(0).cloned().expect("no data");
 
@@ -193,6 +191,7 @@ pub mod matcher {
             o.qty = target.qty;
         }
 
+        let mut qty = *pcs.get(&vk).expect("no match data");
         qty -= vol;
         if qty != 0.0 {
             pcs.insert(vk, qty);
