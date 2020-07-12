@@ -72,13 +72,13 @@ pub mod matcher {
                 TradeType::Limited => {
                     let i = ks.get(0).cloned().expect("");
                     if i == vk && odr.qty > 0.0 {
-                        is_ok = match_send(odr, &mut index, i, ac, &mut self.sx);
+                        is_ok = match_odr(odr, &mut index, i, ac, &mut self.sx);
                     }
                 }
                 TradeType::Market => {
                     for i in ks.iter() {
                         if vk <= *i && odr.qty > 0.0 {
-                            is_ok = match_send(odr, &mut index, *i, ac, &mut self.sx);
+                            is_ok = match_odr(odr, &mut index, *i, ac, &mut self.sx);
                         } else {
                             break;
                         }
@@ -116,7 +116,7 @@ pub mod matcher {
         }
     }
 
-    fn match_update(odr: &mut Odr, index: &mut Index, vk: i64) -> Result<(u64, f64), String> {
+    fn match_process(odr: &mut Odr, index: &mut Index, vk: i64) -> Result<(u64, f64), String> {
         let list = index.1.get_mut(&vk).expect("no match list");
         let mut target = list.get(0).cloned().expect("no data");
 
@@ -158,7 +158,7 @@ pub mod matcher {
         Ok((target.id, vol))
     }
 
-    fn match_send(
+    fn match_odr(
         odr: &mut Odr,
         index: &mut Index,
         vk: i64,
@@ -167,7 +167,7 @@ pub mod matcher {
     ) -> bool {
         let mut is_ok = true;
 
-        let res = match_update(odr, index, vk);
+        let res = match_process(odr, index, vk);
         match res {
             Ok((x, y)) => {
                 let pair = match odr.side {
