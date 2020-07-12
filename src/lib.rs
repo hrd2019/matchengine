@@ -52,14 +52,6 @@ pub struct Odr {
     pub ts: SystemTime,
 }
 
-// impl Copy for Odr {}
-//
-// impl Clone for Odr {
-//     fn clone(&self) -> Odr {
-//         *self
-//     }
-// }
-
 impl Odr {
     pub fn new(
         id: u64,
