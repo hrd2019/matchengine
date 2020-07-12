@@ -6,10 +6,10 @@ pub mod matcher {
     use std::time::SystemTime;
 
     pub trait Process {
-        fn match_do(&mut self, odr: Odr);
+        fn process(&mut self, odr: Odr);
         fn settle_do(&self);
-        fn match_bid(&mut self, odr: &mut Odr, ac: i64);
-        fn match_ask(&mut self, odr: &mut Odr, ac: i64);
+        fn match_deal(&mut self, odr: &mut Odr, ac: i64);
+        fn match_cancel(&mut self, odr: &mut Odr, vk: i64);
     }
 
     struct Matcher {
@@ -38,37 +38,18 @@ pub mod matcher {
     }
 
     impl Process for Matcher {
-        fn match_do(&mut self, mut odr: Odr) {
+        fn process(&mut self, mut odr: Odr) {
             println!("{:#?}", self.queue_bid);
 
             let ac = get_accuracy(&odr.asset);
 
             match odr.opt {
-                OptType::DEAL => match odr.side {
-                    Side::Bid => self.match_bid(&mut odr, ac),
-                    Side::Ask => self.match_ask(&mut odr, ac),
-                },
+                OptType::DEAL => {
+                    self.match_deal(&mut odr, ac);
+                }
                 OptType::CANCEL => {
                     let vk = (odr.pc * ac as f64) as i64;
-
-                    match odr.side {
-                        Side::Ask => {
-                            match_cancel(
-                                &odr,
-                                &mut self.queue_ask.odrs,
-                                &mut self.queue_ask.pcs,
-                                vk,
-                            );
-                        }
-                        Side::Bid => {
-                            match_cancel(
-                                &odr,
-                                &mut self.queue_bid.odrs,
-                                &mut self.queue_bid.pcs,
-                                vk,
-                            );
-                        }
-                    }
+                    self.match_cancel(&mut odr, vk);
                 }
             }
         }
@@ -79,49 +60,24 @@ pub mod matcher {
             }
         }
 
-        fn match_bid(&mut self, odr: &mut Odr, ac: i64) {
-            let pcs = &mut self.queue_ask.pcs;
-            let odrs = &mut self.queue_ask.odrs;
-            let ks: Vec<i64> = pcs.keys().cloned().collect();
+        fn match_deal(&mut self, odr: &mut Odr, ac: i64) {
+            let (pcs, odrs) = match odr.side {
+                Side::Bid => {
+                    let pcs = &mut self.queue_ask.pcs;
+                    let odrs = &mut self.queue_ask.odrs;
 
-            let vk = (odr.pc * ac as f64) as i64;
-
-            let mut is_ok = true;
-
-            match odr.trade {
-                TradeType::Limited => {
-                    let i = ks.get(0).expect("no found");
-                    if *i == vk && odr.qty > 0.0 {
-                        is_ok = match_send(odr, odrs, pcs, *i, ac, &mut self.sx);
-                    }
+                    (pcs, odrs)
                 }
-                TradeType::Market => {
-                    for i in ks.iter() {
-                        if vk >= *i && odr.qty > 0.0 {
-                            is_ok = match_send(odr, odrs, pcs, *i, ac, &mut self.sx);
-                        } else {
-                            break;
-                        }
+                Side::Ask => {
+                    let pcs = &mut self.queue_bid.pcs;
+                    let odrs = &mut self.queue_bid.odrs;
 
-                        if !is_ok {
-                            break;
-                        }
-                    }
+                    (pcs, odrs)
                 }
-            }
+            };
 
-            if is_ok && odr.qty > 0.0 {
-                self.queue_bid.insert(*odr)
-            }
-        }
-
-        fn match_ask(&mut self, odr: &mut Odr, ac: i64) {
-            let pcs = &mut self.queue_bid.pcs;
-            let odrs = &mut self.queue_bid.odrs;
             let ks: Vec<i64> = pcs.keys().cloned().collect();
-
             let vk = (odr.pc * ac as f64) as i64;
-
             let mut is_ok = true;
 
             match odr.trade {
@@ -149,6 +105,39 @@ pub mod matcher {
             if is_ok && odr.qty > 0.0 {
                 self.queue_ask.insert(*odr)
             }
+        }
+
+        fn match_cancel(&mut self, odr: &mut Odr, vk: i64) {
+            let (odrs, pcs) = match odr.side {
+                Side::Ask => {
+                    let ords = &mut self.queue_ask.odrs;
+                    let pcs = &mut self.queue_ask.pcs;
+
+                    (ords, pcs)
+                }
+                Side::Bid => {
+                    let ords = &mut self.queue_bid.odrs;
+                    let pcs = &mut self.queue_bid.pcs;
+                    (ords, pcs)
+                }
+            };
+
+            let odrs = odrs.get_mut(&vk);
+            match odrs {
+                Some(list) => {
+                    for (index, item) in list.iter().enumerate() {
+                        if item.id == odr.id {
+                            list.remove(index);
+
+                            let mut qty = pcs.entry(vk).or_default();
+                            *qty -= odr.qty;
+
+                            break;
+                        }
+                    }
+                }
+                _ => {}
+            };
         }
     }
 
@@ -241,23 +230,5 @@ pub mod matcher {
         }
 
         is_ok
-    }
-
-    fn match_cancel(odr: &Odr, odrs: &mut Cols, pcs: &mut Deep, vk: i64) {
-        let mut pcs = pcs.entry(vk).or_default();
-        *pcs -= odr.qty;
-
-        let odrs = odrs.get_mut(&vk);
-        match odrs {
-            Some(list) => {
-                for (index, item) in list.iter().enumerate() {
-                    if item.id == odr.id {
-                        list.remove(index);
-                        break;
-                    }
-                }
-            }
-            _ => {}
-        }
     }
 }
