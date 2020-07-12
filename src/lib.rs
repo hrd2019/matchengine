@@ -76,6 +76,7 @@ impl Odr {
 }
 
 pub type QTY = f64;
+pub type Index<'a> = (&'a mut BTreeMap<i64, QTY>, &'a mut HashMap<i64, Vec<Odr>>);
 
 #[derive(Debug)]
 pub struct Queue {

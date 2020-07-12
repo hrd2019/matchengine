@@ -1,5 +1,7 @@
 pub mod matcher {
-    use matchengine::{get_accuracy, Asset, MatchPair, Odr, OptType, Queue, Side, TradeType};
+    use matchengine::{
+        get_accuracy, Asset, Index, MatchPair, Odr, OptType, Queue, Side, TradeType,
+    };
     use std::collections::{BTreeMap, HashMap};
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
@@ -61,22 +63,8 @@ pub mod matcher {
         }
 
         fn match_deal(&mut self, odr: &mut Odr, ac: i64) {
-            let (pcs, odrs) = match odr.side {
-                Side::Bid => {
-                    let pcs = &mut self.queue_ask.pcs;
-                    let odrs = &mut self.queue_ask.odrs;
-
-                    (pcs, odrs)
-                }
-                Side::Ask => {
-                    let pcs = &mut self.queue_bid.pcs;
-                    let odrs = &mut self.queue_bid.odrs;
-
-                    (pcs, odrs)
-                }
-            };
-
-            let ks: Vec<i64> = pcs.keys().cloned().collect();
+            let index = get_index(&mut self.queue_ask, &mut self.queue_bid, &odr);
+            let ks: Vec<i64> = index.0.keys().cloned().collect();
             let vk = (odr.pc * ac as f64) as i64;
             let mut is_ok = true;
 
@@ -84,13 +72,13 @@ pub mod matcher {
                 TradeType::Limited => {
                     let i = ks.get(0).cloned().expect("");
                     if i == vk && odr.qty > 0.0 {
-                        is_ok = match_send(odr, odrs, pcs, i, ac, &mut self.sx);
+                        is_ok = match_send(odr, index.1, index.0, i, ac, &mut self.sx);
                     }
                 }
                 TradeType::Market => {
                     for i in ks.iter() {
                         if vk <= *i && odr.qty > 0.0 {
-                            is_ok = match_send(odr, odrs, pcs, *i, ac, &mut self.sx);
+                            is_ok = match_send(odr, index.1, index.0, *i, ac, &mut self.sx);
                         } else {
                             break;
                         }
@@ -103,33 +91,27 @@ pub mod matcher {
             }
 
             if is_ok && odr.qty > 0.0 {
-                self.queue_ask.insert(*odr)
+                match odr.side {
+                    Side::Ask => {
+                        self.queue_ask.insert(*odr);
+                    }
+                    Side::Bid => {
+                        self.queue_bid.insert(*odr);
+                    }
+                }
             }
         }
 
         fn match_cancel(&mut self, odr: &mut Odr, vk: i64) {
-            let (odrs, pcs) = match odr.side {
-                Side::Ask => {
-                    let ords = &mut self.queue_ask.odrs;
-                    let pcs = &mut self.queue_ask.pcs;
-
-                    (ords, pcs)
-                }
-                Side::Bid => {
-                    let ords = &mut self.queue_bid.odrs;
-                    let pcs = &mut self.queue_bid.pcs;
-                    (ords, pcs)
-                }
-            };
-
-            let odrs = odrs.get_mut(&vk);
+            let index = get_index(&mut self.queue_ask, &mut self.queue_bid, &odr);
+            let odrs = index.1.get_mut(&vk);
             match odrs {
                 Some(list) => {
-                    for (index, item) in list.iter().enumerate() {
+                    for (i, item) in list.iter().enumerate() {
                         if item.id == odr.id {
-                            list.remove(index);
+                            list.remove(i);
 
-                            let mut qty = pcs.entry(vk).or_default();
+                            let mut qty = index.0.entry(vk).or_default();
                             *qty -= odr.qty;
 
                             break;
@@ -230,5 +212,24 @@ pub mod matcher {
         }
 
         is_ok
+    }
+
+    fn get_index<'a>(queue_ask: &'a mut Queue, queue_bid: &'a mut Queue, odr: &Odr) -> Index<'a> {
+        let index: Index = match odr.side {
+            Side::Bid => {
+                let pcs = &mut queue_ask.pcs;
+                let odrs = &mut queue_ask.odrs;
+
+                (pcs, odrs)
+            }
+            Side::Ask => {
+                let pcs = &mut queue_bid.pcs;
+                let odrs = &mut queue_bid.odrs;
+
+                (pcs, odrs)
+            }
+        };
+
+        index
     }
 }
