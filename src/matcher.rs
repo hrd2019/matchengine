@@ -90,9 +90,9 @@ pub mod matcher {
 
             match odr.trade {
                 TradeType::Limited => {
-                    let i = ks.get(0).cloned().expect("");
-                    if i == vk && odr.qty > 0.0 {
-                        is_ok = match_send(odr, odrs, pcs, i, ac, &mut self.sx);
+                    let i = ks.get(0).expect("no found");
+                    if *i == vk && odr.qty > 0.0 {
+                        is_ok = match_send(odr, odrs, pcs, *i, ac, &mut self.sx);
                     }
                 }
                 TradeType::Market => {
@@ -163,7 +163,7 @@ pub mod matcher {
     ) -> Result<(u64, f64), String> {
         let mut qty = *pcs.get(&vk).expect("no match data");
 
-        let list = odrs.get_mut(&vk).expect("no list");
+        let list = odrs.get_mut(&vk).expect("no match list");
         let mut target = list.get(0).cloned().expect("no data");
 
         let left = odr.qty - target.qty;

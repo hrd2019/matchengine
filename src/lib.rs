@@ -3,9 +3,10 @@ use std::time::SystemTime;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Asset {
-    A(i64),
-    B(i64),
-    C(i64),
+    BTC(i64),
+    EOS(i64),
+    ETC(i64),
+    USDT(i64),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -29,8 +30,9 @@ pub struct MatchPair {
     pub ts: SystemTime,
 }
 
-pub const ASSET_A: Asset = Asset::A(1000);
-pub const ASSET_B: Asset = Asset::B(1000);
+pub const ASSET_BTC: Asset = Asset::BTC(1000);
+pub const ASSET_EOS: Asset = Asset::EOS(1000);
+pub const ASSET_USDT: Asset = Asset::USDT(1000);
 
 #[derive(Debug, Copy, Clone)]
 pub enum Side {
@@ -148,7 +150,7 @@ mod test {
 
         let o1 = Odr::new(
             1,
-            ASSET_A,
+            ASSET_BTC,
             TradeType::Market,
             OptType::DEAL,
             1.2,
@@ -157,7 +159,7 @@ mod test {
         );
         let o2 = Odr::new(
             2,
-            ASSET_A,
+            ASSET_BTC,
             TradeType::Market,
             OptType::DEAL,
             1.3,
@@ -166,7 +168,7 @@ mod test {
         );
         let o3 = Odr::new(
             3,
-            ASSET_A,
+            ASSET_BTC,
             TradeType::Market,
             OptType::DEAL,
             1.1,
@@ -175,7 +177,7 @@ mod test {
         );
         let o4 = Odr::new(
             4,
-            ASSET_A,
+            ASSET_BTC,
             TradeType::Market,
             OptType::DEAL,
             1.1,
@@ -184,7 +186,7 @@ mod test {
         );
         let o5 = Odr::new(
             5,
-            ASSET_A,
+            ASSET_BTC,
             TradeType::Market,
             OptType::DEAL,
             1.05,
@@ -204,8 +206,8 @@ mod test {
 
 pub fn get_accuracy(asset: &Asset) -> i64 {
     let ac: i64 = match *asset {
-        Asset::A(x) => x,
-        Asset::B(x) => x,
+        Asset::BTC(x) => x,
+        Asset::EOS(x) => x,
         _ => 100,
     };
 

@@ -1,4 +1,4 @@
-use matchengine::{Odr, OptType, Queue, Side, TradeType, ASSET_A};
+use matchengine::{Odr, OptType, Queue, Side, TradeType, ASSET_BTC};
 
 mod matcher;
 
@@ -9,7 +9,7 @@ fn main() {
 
     let o1 = Odr::new(
         1,
-        ASSET_A,
+        ASSET_BTC,
         TradeType::Market,
         OptType::DEAL,
         1.2,
@@ -18,7 +18,7 @@ fn main() {
     );
     let o2 = Odr::new(
         2,
-        ASSET_A,
+        ASSET_BTC,
         TradeType::Market,
         OptType::DEAL,
         1.4,
